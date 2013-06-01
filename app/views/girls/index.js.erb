@@ -1,0 +1,340 @@
+
+function user_action_handler(type) {
+
+    var form = new Ext.form.Panel({
+
+        baseCls: 'x-plain',
+
+        labelWidth: 60,
+
+        border:false,
+
+        layout:"form",
+
+        items: [
+            {xtype:"hidden",name: "id"},
+            {xtype:"textfield",fieldLabel: 'name', name: "name",emptyText:"enter user",allowBlank:false,anchor:'95%'},
+
+            {xtype:"textfield",fieldLabel: 'E-mail',vtype:"email",name: "email",anchor:'95%'},
+
+            {xtype:"numberfield",fieldLabel: 'phone',allowNegative:false,allowDecimals:false,name: "phone",anchor:'95%'}           
+
+        ],
+
+        buttonAlign:"center",
+        
+        buttons: [
+
+            {
+                text: 'save',
+
+                handler:function() {
+                   
+                    if (form.getForm().isValid()) {
+                      switch (type) {
+                      case "add":
+                     
+                     Ext.Ajax.request({
+									    url: 'girls/girl_add',
+									    params: form.getForm().getValues(),
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             edit_window.close();
+	                             store.reload();
+	                        } else {
+	                            show_tip_message("false")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("false")
+                          }                
+                      });
+                      break;
+                      case "edit": 
+                       Ext.Ajax.request({
+									    url: 'girls/girl_edit',
+									    params: form.getForm().getValues(),
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             edit_window.close();
+	                             store.reload();
+	                        } else {
+	                            show_tip_message("false")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("false")
+                          }                
+                      });
+                      break;
+                      
+                    
+                      
+                      }     //switch
+                
+                   }       //form
+                    
+                   }      //handler 
+                   
+
+             },                    
+
+            {
+
+                text: 'cancel',
+
+                handler:function() {
+
+                    edit_window.close()
+
+                }
+
+            }
+
+        ]
+
+        });
+
+    var edit_window = new Ext.Window({
+
+        width:380,
+
+        height:270,
+
+        resizable:false,
+
+        layout:"fit",
+
+        closeAction:'close',
+
+        plain: true,
+
+        constrainHeader:true,
+
+        modal:true,
+
+        bodyStyle: 'padding:5px;',
+
+        items:[form]
+
+    });
+
+  var rows = grid_json.getSelectionModel().getSelection();
+
+    if (type == "add") {
+
+      //  user_role_store.load();
+
+        edit_window.show();
+
+        edit_window.setTitle("add user");
+
+    //    edit_window.setIconClass("silk-user_add");
+
+    }  else if(type == "edit"){
+           if(rows.length==1){
+            form.getForm().setValues({
+                id:rows[0].get("id"),
+                name:rows[0].get("name"),
+
+                email:rows[0].get("email"),
+
+                phone:rows[0].get("phone"),
+
+            });
+            edit_window.show();
+            }
+            else
+            {
+            show_tip_message("chose a data")
+             }
+          
+
+        }
+        else
+        {
+                     if(rows.length==1){
+                       Ext.Ajax.request({
+									    url: 'girls/girl_delete',
+									    params: { id : rows[0].get("id") },
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             store.reload();
+	                        } else {
+	                            show_tip_message("false")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("false")
+                          }                
+                      });
+                      }
+                      else
+                      {
+                       show_tip_message("chose a data")
+                      }
+                   
+        
+        }
+}
+
+
+
+
+ itemsPerPage = 2;   // set the number of items you want per page
+
+
+var store = Ext.create('Ext.data.Store', {
+    id:'simpsonsStore',
+    autoLoad: false,
+    fields:['name', 'email', 'phone'],
+    pageSize: itemsPerPage, // items per page
+    proxy: {
+        type: 'ajax',
+        url: 'girls.json',  // url that will load data with respect to start and limit params
+        reader: {
+            type: 'json',
+            root: 'gridData',
+            totalProperty: 'totalCount'
+        },
+    extraParams : {
+        value : <%= params[:value].nil? ? 0 : params[:value] %>,
+        search_type: <%= params[:search_type].nil? ? 0 : params[:search_type] %>
+     }
+    }  
+});
+
+// specify segment of data you want to load using params
+store.load({
+    params:{
+        start:0,
+        limit: itemsPerPage,
+
+    }
+});
+////////////
+Ext.regModel('PostInfo', {
+		    fields: [{name: 'province'},{name: 'post'}]
+		});
+		
+var postStore = Ext.create('Ext.data.Store',{
+			model : 'PostInfo',
+			data : [
+				{province:'email',post:'100000'},
+				{province:'name',post:'101100'},
+				{province:'phone',post:'102200'}
+			]
+		});		
+
+function vehicle_search(type){
+
+    if(type=="search"){
+
+        if(Ext.getCmp("search_vehicle").isValid()){
+
+            Ext.getCmp("clear_vehicle_button").enable();
+            store.load({
+					    params:{
+					        start:0,
+					        limit: 2,
+					        value : Ext.getCmp("search_vehicle").getValue(),
+                  search_type: Ext.getCmp("search_in_vehicle_list_id").getValue()
+					    }
+              });
+          
+
+        }else{
+
+            show_tip_message("enter something")
+
+        }
+
+    }else if(type=="clear"){
+
+        Ext.getCmp("clear_vehicle_button").disable();
+        Ext.getCmp("search_vehicle").setValue('');
+        store.load({
+					    params:{
+					        start:0,
+					        limit: 2,
+					    }
+              });
+
+    }
+
+}
+
+///////////
+
+var grid_json=Ext.create('Ext.grid.Panel', {
+    title: 'Simpsons',
+    store: store,
+    columns: [
+        { header: 'Name',  dataIndex: 'name' },
+        { header: 'Email', dataIndex: 'email', flex: 1 },
+        { header: 'Phone', dataIndex: 'phone' }
+    ],
+    width: 400,
+    height: 125,
+    selType: 'rowmodel',
+    dockedItems: [{
+        xtype: 'pagingtoolbar',
+        store: store,   // same store GridPanel is using
+        dock: 'bottom',
+        displayInfo: true,   
+        items:[
+                '-',
+                { text: '<%= t(:add) %>', iconCls:"silk-user_add", handler: function() {
+                    user_action_handler("add")
+                }},
+                { text: '<%= t(:edit) %>', iconCls:"silk-user_edit", handler: function() {
+                    user_action_handler("edit");
+          //          var rows = grid.getSelectionModel().getSelection();
+                }},
+                { text: '<%= t(:delete) %>', iconCls:"silk-user_delete", handler: function() {
+                    user_action_handler("delete")
+                }},
+                {
+						    	xtype: 'textfield',
+						    	hideLabel: true,
+						    	width: 150,
+						    	id: "search_vehicle",
+						    	allowBlank:false,
+						    },
+                {
+                  id:"search_in_vehicle_list_id",
+									xtype : 'combo',
+									listConfig : {
+										emptyText : 'no match data', 
+										maxHeight : 60 
+									},
+  								name:'post',
+									autoSelect : true,
+//								fieldLabel:'post',
+									triggerAction: 'all', 
+									store : postStore, 
+									displayField:'province', 
+									valueField:'post', 
+									queryMode: 'local', 
+									forceSelection : true, 
+									typeAhead : true, 
+									value:'101100'
+								},
+								{ text: 'search',id:"search_vehicle_button", iconCls:"silk-zoom", handler:function(){vehicle_search("search")} },
+                { text: 'clear', id:"clear_vehicle_button", disabled:true, handler: function(){vehicle_search("clear")} }
+                ]       
+    }],
+});
+
+
+
+var work_space = Ext.getCmp('work-space');
+
+work_space.removeAll();
+
+work_space.add(grid_json);
+
+work_space.doLayout();

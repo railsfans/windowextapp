@@ -1,0 +1,377 @@
+var store = Ext.create('Ext.data.TreeStore', {
+    root: {
+        expanded: true,
+        children: [
+            { text: "detention", leaf: true },
+            { text: "homework", expanded: true, children: [
+                { text: "book report", leaf: true },
+                { text: "alegrbra", leaf: true}
+            ] },
+            { text: "buy lottery tickets", leaf: true }
+        ]
+    }
+});
+
+var my_tree = Ext.create('Ext.tree.Panel', {
+    title: 'Simple Tree',
+    width: 200,
+    height: 150,
+    store: store,
+//    rootVisible: false,   
+    rootVisible: true,
+    autoScroll: true
+});
+
+
+var tree = Ext.create('Ext.tree.Panel', {
+		    title: 'TreeGrid',
+		    width : 200,
+		    height : 120,
+		    fields: ['name', 'description'],
+		    columns: [{
+		        xtype: 'treecolumn', 
+		        text: 'name',
+		        dataIndex: 'name',
+		        width: 200,
+		        sortable: true
+		    }, {
+		        text: 'describe',
+		        dataIndex: 'description',
+		        flex: 1,
+		        sortable: true
+		    }],
+		    root: {
+		        name: 'treeroot',
+		        description: 'treerootdescribe',
+		        expanded: true,
+		        children: [{
+		            name: 'nodeone',
+		            description: 'nodedescribe',
+		            leaf: true
+		        }, {
+		            name: 'nodetwo',
+		            description: 'nodetwodescribe',
+		            expanded: true,
+		            children: [
+				            {
+				            name: 'nodeone',
+				            description: 'nodedescribe',
+				            leaf: true
+				            }
+		            ]
+		        }]
+		    }
+		});
+
+
+    Ext.regModel("OrgInfo", {
+		    fields: ['parent_id','name', 'code']
+		});
+		var myStore = new Ext.data.TreeStore({
+			model : 'OrgInfo',
+			nodeParam : 'parent_id', 
+			proxy: {
+	            type: 'ajax',
+	            url: 'code/all.json',
+	            reader: 'json'
+	        },
+			autoLoad: true,
+        root: {
+            name: 'codelist',
+            id: 1,
+            expanded: true,
+        }
+		});
+		
+		var tree_panel = Ext.create('Ext.tree.Panel', {
+		    title: 'example',
+		    columns: [{
+		        xtype: 'treecolumn', 
+		        text: 'code array',
+		        dataIndex: 'name',
+		        width: 150,
+		        sortable: true
+		    }, {
+		        text: 'code type',
+		        dataIndex: 'code',
+		        flex: 1,
+		        sortable: true
+		    }],
+		    store : myStore,
+		    rootVisible: true,
+		    bodyStyle: {
+				    background: '#ffc',
+				//    padding: '10px'
+				}
+		});
+
+
+function treeItemAdd(){
+   var node_selected = tree_panel.getSelectionModel().getSelection();
+   if(tree_panel.getSelectionModel().hasSelection()){
+      var form = new Ext.FormPanel({
+        baseCls: 'x-plain',
+        labelWidth: 65,
+        border:false,
+        layout:"form",
+        buttonAlign:"center",
+        items:[
+            {xtype:"textfield",anchor:'95%',fieldLabel: 'name',name: 'name',allowBlank:false}
+        ],
+        buttons: [
+            {
+                text: 'save',
+                handler:function() {
+                    if (form.getForm().isValid()) {
+    	                Ext.Ajax.request({
+                            url: 'boys/add_tree',
+                            success: function(response){
+                                     tree_panel.disableSelection;
+                                     tree_panel.store.load();
+                                     window.close()
+                            },
+                            failure: function(response){
+                                     show_tip_message("failure")
+                            },
+                            params: {
+                                     parent_id: node_selected[0].data.id,
+                                     name:form.getForm().findField("name").getValue()
+                            }
+                         });
+                       }
+                }
+            },
+            {
+                text: 'cancel',
+                handler:function() {
+                      window.close()
+                }
+            }
+        ]
+    });
+    var window = new Ext.Window({
+        title:"new",
+        iconCls:"silk-add",
+        width:280,
+        height:150,
+        resizable:false,
+        layout:"fit",
+        closeAction:'close',
+        plain: true,
+        constrainHeader:true,
+        modal:true,
+        bodyStyle: 'padding:5px;',
+        items:[form]
+    }).show();
+ }else {
+          show_tip_message("chose")
+ }
+
+};
+
+
+function treeItemEdit(){
+   var node_selected = tree_panel.getSelectionModel().getSelection();
+   if(tree_panel.getSelectionModel().hasSelection()){
+      var form = new Ext.FormPanel({
+        baseCls: 'x-plain',
+        labelWidth: 65,
+        border:false,
+        buttonAlign:"center",
+        items:[
+            {xtype:"textfield",anchor:'95%',fieldLabel: 'name',name: 'name',allowBlank:false}, 
+        ],
+        buttons: [
+            {
+                text: 'save',
+                handler:function() {
+                    if (form.getForm().isValid()) {
+                       Ext.Ajax.request({
+                         url: 'boys/edit_tree',
+                         success: function(response){
+                                   tree_panel.store.load();
+                                   tree_panel.disableSelection;             
+                                   window.close();
+                         },
+                         failure: function(response){
+                              show_tip_message("false!")
+                         },
+                         params: {
+                                    name:form.getForm().findField("name").getValue(),
+                                    id: node_selected[0].data.id
+                         }
+                     });
+                   }
+                 }
+             },
+            {
+                text: 'cancel',
+                handler:function() {
+                    window.close()
+                }
+            }
+        ]
+    });
+    var window = new Ext.Window({
+        title:"edit",
+        iconCls:"silk-add",
+        width:280,
+        height:150,
+        resizable:false,
+        layout:"fit",
+        closeAction:'close',
+        plain: true,
+        constrainHeader:true,
+        modal:true,
+        bodyStyle: 'padding:5px;',
+        items:[form]
+    });
+    window.show();
+    form.getForm().setValues({
+         name:node_selected[0].data.name
+     });
+  }else{
+       show_tip_message("chose one")
+  }
+};
+
+function treeItemDelete(){
+     var node_selected = tree_panel.getSelectionModel().getSelection();
+     if(tree_panel.getSelectionModel().hasSelection()){
+       if(node_selected[0].data.id==1){
+         show_tip_message("notice")
+       }else{
+         Ext.Ajax.request({
+           url: 'boys/delete_tree',
+           success: function(response){
+           tree_panel.store.load();
+           tree_panel.disableSelection;
+           
+           },
+           failure: function(response){
+              show_tip_message("failure")
+           },
+           params: {
+          id: node_selected[0].data.id
+           }
+          });}
+    }else{
+          show_tip_message("chose dir")
+    }
+};
+
+  var code_list =new Ext.form.Panel({
+
+        id:"note_west",
+
+        title: 'code list',
+        layout: 'fit',
+        bbar:  
+        [
+            { xtype: 'button', text: 'add', iconCls:"silk-user_add",handler: function(){ treeItemAdd()} },
+            { xtype: 'button', text: 'edit', iconCls:"silk-user_edit", handler: function() {
+                    treeItemEdit();
+            }},
+            { xtype: 'button', text: 'delete', iconCls:"silk-user_delete", handler: function() {
+                treeItemDelete();
+            }},
+
+         ],
+
+        autoScroll: true,
+
+        items: tree_panel
+
+    });
+
+
+	var datas = [
+			[100,'three',24],
+			[200,'four',30],
+			[300,'five',29]
+		];
+	
+	var my_grid =	Ext.create('Ext.grid.Panel',{
+			title : 'Grid example',
+			frame:true,
+			viewConfig: {
+				forceFit : true,
+	            stripeRows: true
+	        },
+			store: {
+		        fields: ['id','name','age'],
+		        proxy: {
+		            type: 'memory',
+		            data : datas,
+		            reader : 'array'
+		        },
+		        autoLoad: true
+		    },
+			columns: [
+				{header: "id", width: 30, dataIndex: 'id', sortable: true},
+				{header: "name", width: 80, dataIndex: 'name', sortable: true},
+				{header: "age", width: 80, dataIndex: 'age', sortable: true}
+			],
+			tbar: [
+         { xtype: 'button', text: 'Button 1' },
+         {text: 'new'}, {text: 'open'},
+	    {text: 'edit'}, {text: 'save'},
+	    '-', 
+	    {
+	    	xtype: 'textfield',
+	    	hideLabel: true,
+	    	width: 150
+	    },
+	    '->', 
+	    '<a href=#>hyperlink</a>',
+	    {
+	    	xtype: 'tbspacer', 
+	    	width: 50
+	    },
+	    'static text'
+      ]
+		});
+
+
+var car_tabPanel = new Ext.TabPanel({
+
+		id:"car_tabPanels",
+	
+		activeTab: 4,
+
+    resizeTabs:true,
+
+    border:false,
+
+    tabWidth:170,
+
+    minTabWidth: 150,
+
+    autoDestroy:true,
+
+    enableTabScroll:true,
+
+    defaults:{
+
+        layout:"fit"
+
+    },
+
+   items: [
+				{title: 'tab1',html : 'tab1content'},
+				{title: 'tab2',html : 'tab2content'},
+				my_grid,
+				my_tree,
+				tree,
+				code_list
+			]
+
+});
+
+var work_space = Ext.getCmp('work-space');
+
+work_space.removeAll();
+
+work_space.add(car_tabPanel);
+
+work_space.doLayout();

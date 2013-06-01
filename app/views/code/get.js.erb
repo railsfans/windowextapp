@@ -1,0 +1,124 @@
+ var form = new Ext.form.Panel({
+      baseCls: 'x-plain',
+      labelWidth: 60,
+      border:false,
+      layout:"form",
+      items: [
+          {xtype:"hidden",name: "id", value: record.get('id')},
+          {xtype:"hidden",name: "parent_id", value: record.get('parent_id')},
+          {xtype:"textfield",fieldLabel: 'name', name: "name",emptyText:"enter user",allowBlank:false,anchor:'95%'},
+          {xtype:"textfield",fieldLabel: 'code',name: "code",anchor:'95%', regex : /^(\d{2})$/,
+					   regexText:'only can enter two number'}       
+      ],
+      buttonAlign:"center",     
+      buttons: [
+          {
+              text: 'save',
+              handler:function() {     
+                  if (form.getForm().isValid()) {
+                  	switch (type) {
+                    case "add":
+                    
+                   Ext.Ajax.request({
+								    url: 'code/node_add',
+								    params: form.getForm().getValues(),
+								    success: function(response){
+								       var obj = Ext.decode(response.responseText);
+                        if (obj.success) {
+                             edit_window.close();
+                             myStore.load();
+                        } else {
+                            show_tip_message("you enter the same code")
+                        }
+                        },
+                    failure: function(response) {
+                            show_tip_message("network false")
+                        }                
+                    });
+                    break;   
+                    case "edit":
+                   
+                      Ext.Ajax.request({
+									    url: 'code/node_edit',
+									    params: form.getForm().getValues(),
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             edit_window.close();
+	                             myStore.load();
+	                        } else {
+	                            show_tip_message("code repeat")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("false")
+                          }                
+                      });
+                    break;
+                  }       //switch
+                 }       //form
+                 }      //handler 
+           },                    
+          {
+              text: 'cancel',
+              handler:function() {
+                  edit_window.close()
+              }
+          }
+      ]
+      });
+  var edit_window = new Ext.Window({
+      width:380,
+      height:270,
+      resizable:false,
+      layout:"fit",
+      closeAction:'close',
+      plain: true,
+      constrainHeader:true,
+      modal:true,
+      bodyStyle: 'padding:5px;',
+      items:[form]
+  });
+  
+   if (type == "add") {
+    if (record.get('parent_id')!=1 && record.get('parent_id')!='')
+    alert("you can't add");
+    else {
+    edit_window.show();
+    edit_window.setTitle("add node");
+    }
+    } else if(type == "edit"){
+    form.getForm().setValues({
+            name:record.get('name'),
+            code:record.get('code')
+        });
+        edit_window.show();
+    edit_window.setTitle("edit node");
+        }
+    else { 
+      Ext.MessageBox.confirm('Delete', 'Are you sure ?', function(btn){
+							   if(btn === 'yes'){
+							  Ext.Ajax.request({
+							    url: 'code/node_delete',
+							    params: { id : record.get('id') },
+							    success: function(response){
+							       var obj = Ext.decode(response.responseText);
+                      if (obj.success) {
+                           myStore.load();
+                      } else {
+                          show_tip_message("false")
+                      }
+                      },
+                  failure: function(response) {
+                          show_tip_message("false")
+                      }                
+                 });
+							   }
+							   else{
+							      alert('cancel')
+							   }
+							 });
+    
+    }
+   
+  

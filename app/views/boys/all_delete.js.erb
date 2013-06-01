@@ -1,0 +1,23 @@
+var node_selected = tree_panel.getSelectionModel().getSelection()
+var flag=true
+<% @codes.each do |node|%>                                         
+    if node_selected[0].data.id==<%=node.parent_id%>
+    flag=false   
+    end
+<% end %>
+if(flag){
+     Ext.Ajax.request({
+       url: 'boys/delete_tree',
+       success: function(response){
+               tree_panel.remove(node_selected[0].data.id)
+       },
+       failure: function(response){
+            show_tip_message("failure!")
+      },
+      params: {
+          id: node_selected[0].data.id
+      }
+   })
+}else{
+     show_tip_message("have dir")
+}

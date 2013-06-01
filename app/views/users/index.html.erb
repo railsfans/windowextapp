@@ -1,0 +1,12 @@
+<ul>
+<% @users.each do |user| %>
+  <li>
+  <%= image_tag user.avatar.url %>
+  <%= link_to 'Show', :controller => 'users', :action => 'show', :id => user %>
+  <%= link_to 'Edit', :controller => 'users', :action => 'edit', :id => user %>
+  <%= link_to 'Delete', :controller => 'users', :action => 'destroy', :id => user %>
+  <%= link_to "Download", :controller=>'users', :action=>'avatars', :id=>user %>
+  </li>
+<% end %>
+</ul>
+<%= link_to 'New file', :controller => 'users', :action => 'new' %>

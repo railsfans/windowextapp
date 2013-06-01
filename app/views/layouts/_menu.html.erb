@@ -1,0 +1,43 @@
+<ul>
+
+  <li id="vehicle-management" class="left-menu">
+     <%= link_to upload_uploadin_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_11.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">入库表导入</div>
+     <% end %>
+     
+     <%= link_to girls_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_11.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">出库表导入</div>
+     <% end %>
+     
+     <%= link_to girls_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_11.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">出入库记录查询</div>
+     <% end %>
+     
+     <%= link_to girls_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_11.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">物料查询</div>
+     <% end %>
+  </li>
+
+  <li id="user-management" class="left-menu">
+    
+    <%= link_to code_list_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_12.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">用户管理</div>
+     <% end %>
+    
+     <%= link_to new_boy_path(:format=>:js), :remote=>true do %>
+     <div><%= image_tag("shortcuts_11.png", :class=>'menu-icon') %></div>
+     <div class="menu-text">用户管理</div>
+     <% end %>
+     
+  </li>
+  
+  <li id="tree" class="left-menu">
+ 
+  </li>
+
+</ul>

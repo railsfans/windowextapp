@@ -1,0 +1,59 @@
+ var upload = Ext.create('Ext.form.Panel', {
+        width: 500,
+        frame: true,
+        title: 'File Upload Form',
+        bodyPadding: '10 10 0',
+
+        defaults: {
+            anchor: '100%',
+            allowBlank: false,
+            msgTarget: 'side',
+            labelWidth: 50
+        },
+
+        items: [{
+            xtype: 'textfield',
+            fieldLabel: 'Name'
+        },{
+            xtype: 'filefield',
+            id: 'form-file',
+            emptyText: 'Select an image',
+            fieldLabel: 'Photo',
+            name: 'photo',
+            buttonText: '',
+            buttonConfig: {
+                iconCls: 'upload-icon'
+            }
+        }],
+
+        buttons: [{
+            text: 'Save',
+            handler: function(){
+               var form = this.up('form').getForm();
+                if(form.isValid()){
+                    form.submit({
+                        url: 'upload/upload.json',
+                        waitMsg: 'Uploading your photo...',
+                        success: function(fp, o) {
+                           show_tip_message("false"),
+													 form.reset()
+                        }
+                    });
+                }
+             
+            }
+        },{
+            text: 'Reset',
+            handler: function() {
+                this.up('form').getForm().reset();
+            }
+        }]
+    });
+    
+    var work_space = Ext.getCmp('work-space');
+
+work_space.removeAll();
+
+work_space.add(upload);
+
+work_space.doLayout();

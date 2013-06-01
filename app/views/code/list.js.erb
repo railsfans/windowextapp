@@ -1,0 +1,366 @@
+function code_action_handler(type) {
+
+    var form = new Ext.form.Panel({
+
+        baseCls: 'x-plain',
+
+        labelWidth: 60,
+
+        border:false,
+
+        layout:"form",
+
+        items: [
+            {xtype:"hidden",name: "id"},
+            {xtype:"hidden",name: "parent_id", value: <%= params[:id].to_i %> },
+            {xtype:"textfield",fieldLabel: 'code',name: "code",allowBlank:false, anchor:'95%', regex : /^(\d{4})$/,
+					   regexText:'only can enter four number'}, 
+            {xtype:"textfield",fieldLabel: 'partName', name: "name",emptyText:"enter user",anchor:'95%'},
+            {xtype:"textfield",fieldLabel: 'partNum', name: "partNum",anchor:'95%'},
+            {xtype:"textfield",fieldLabel: 'footprint',name: "footprint",allowBlank:false,anchor:'95%'},
+            {xtype:"textfield",fieldLabel: 'manufacturer', name: "manufacturer",anchor:'95%'},
+            {xtype:"textarea",fieldLabel: 'describe',name: "describe",anchor:'95%'}                 
+
+        ],
+
+        buttonAlign:"center",
+        
+        buttons: [
+
+            {
+                text: 'save',
+
+                handler:function() {
+                   
+                    if (form.getForm().isValid()) {
+                      switch (type) {
+                      case "add":
+                     
+                     Ext.Ajax.request({
+									    url: 'code/code_add',
+									    params: form.getForm().getValues(),
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             edit_window.close();
+	                             m_store.reload();
+	                        } else {
+	                            show_tip_message("code repeat")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("network false")
+                          }                
+                      });
+                      break;
+                      case "edit": 
+                       Ext.Ajax.request({
+									    url: 'code/code_edit',
+									    params: form.getForm().getValues(),
+									    success: function(response){
+									       var obj = Ext.decode(response.responseText);
+	                        if (obj.success) {
+	                             edit_window.close();
+	                             m_store.reload();
+	                        } else {
+	                            show_tip_message("code repeat")
+	                        }
+                          },
+                      failure: function(response) {
+                              show_tip_message("false")
+                          }                
+                      });
+                      break;
+                      
+                    
+                      
+                      }     //switch
+                
+                   }       //form
+                    
+                   }      //handler 
+                   
+
+             },                    
+
+            {
+
+                text: 'cancel',
+
+                handler:function() {
+
+                    edit_window.close()
+
+                }
+
+            }
+
+        ]
+
+        });
+
+    var edit_window = new Ext.Window({
+
+        width:380,
+
+        height:350,
+
+        resizable:false,
+
+        layout:"fit",
+
+        closeAction:'close',
+
+        plain: true,
+
+        constrainHeader:true,
+
+        modal:true,
+
+        bodyStyle: 'padding:5px;',
+
+        items:[form]
+
+    });
+
+  var rows = m_codegrid.getSelectionModel().getSelection();
+
+    if (type == "add") {
+
+      //  user_role_store.load();
+
+        edit_window.show();
+
+        edit_window.setTitle("add user");
+
+    //    edit_window.setIconClass("silk-user_add");
+
+    }  else if(type == "edit"){
+           if(rows.length==1){
+            form.getForm().setValues({
+                id:rows[0].get("id"),
+                name:rows[0].get("name"),
+                footprint: rows[0].get("footprint"),
+                manufacturer: rows[0].get("manufacturer"),
+                partNum: rows[0].get("partNum"),
+                describe: rows[0].get("describe"),
+                code: rows[0].get("code").substr(4,7)
+
+            });
+            edit_window.show();
+            }
+           else if(rows.length>1)
+           {
+            show_tip_message("you  chose one more data")
+           }
+           else {
+            show_tip_message(" chose a data")
+           }
+
+        }
+        else
+        {
+             if(rows.length!=0){
+             var delete_id="";
+             for(var i=0; i<rows.length; i++){
+               delete_id+=rows[i].get("id");
+               if(i!=rows.length-1){
+                    delete_id+=",";
+                }
+              };
+              Ext.MessageBox.confirm('Delete', 'Are you sure ?', function(btn){
+							   if(btn === 'yes'){
+							  Ext.Ajax.request({
+							    url: 'code/code_delete',
+							    params: { id : delete_id },
+							    success: function(response){
+							       var obj = Ext.decode(response.responseText);
+                      if (obj.success) {
+                           m_store.reload();
+                      } else {
+                          show_tip_message("false")
+                      }
+                      },
+                  failure: function(response) {
+                          show_tip_message("false")
+                      }                
+                 });
+							   }
+							   else{
+							      alert('cancel')
+							   }
+							 });
+              }
+              else
+              {
+               show_tip_message("chose a data")
+              }
+                   
+        
+        }
+}
+
+function code_search(type){
+
+    if(type=="search"){
+
+        if(Ext.getCmp("search_code").isValid()){
+
+            Ext.getCmp("clear_code_button").enable();
+            m_store.load({
+					    params:{
+		       //      start:0,
+				   //      limit: 20,		
+					        value1 : Ext.getCmp("search_code1").getValue(),
+					        value2 : Ext.getCmp("search_code2").getValue(),
+                  search_type: Ext.getCmp("search_code").getValue()
+					    }
+              });
+          
+
+        }else{
+
+            show_tip_message("enter something")
+
+        }
+
+    }else if(type=="clear"){
+
+        Ext.getCmp("clear_code_button").disable();
+        Ext.getCmp("search_code1").setValue('');
+        Ext.getCmp("search_code2").setValue('');
+        m_store.load({
+					    params:{
+					        start:0,
+					        limit: 2,
+					        parent_id : <%= params[:id].to_i %>
+					    }
+              });
+
+    }
+
+}
+
+
+Ext.regModel('PostInfo', {
+		    fields: [{name: 'key'},{name: 'value'}]
+		});
+		
+var postStore = Ext.create('Ext.data.Store',{
+			model : 'PostInfo',
+			data : [
+				{key:'or',value:'100000'},
+				{key:'and',value:'101100'}
+			]
+		});	
+
+        var m_itemsPerPage = 2;   // set the number of items you want per page
+    
+				var m_store = Ext.create('Ext.data.Store', {
+				    id:'simpsonsStore',
+				    autoLoad: false,
+				    fields:['describe','name', 'code', 'partNum', 'footprint', 'manufacturer'],
+				    pageSize: m_itemsPerPage, // items per page
+				    proxy: {
+				        type: 'ajax',
+				        url: 'code/lists.json',  // url that will load data with respect to start and limit params
+				         extraParams : {
+                  parent_id : <%= params[:id].to_i %>,
+                  value1 : <%= params[:value1].nil? ? 0 : params[:value1] %>,
+			            value2 : <%= params[:value2].nil? ? 0 : params[:value2] %>,
+			            search_type: <%= params[:search_type].nil? ? 0 : params[:search_type] %>
+                },
+				        reader: {
+				            type: 'json',
+				            root: 'gridData',
+				            totalProperty: 'totalCount'
+				        }
+				    }  
+				});
+				
+				// specify segment of data you want to load using params
+				m_store.load({
+				    params:{
+				        start:0,
+				        limit: m_itemsPerPage,
+				        parent_id: <%= params[:id].to_i %>
+				    }
+				});
+				
+				var m_codegrid=Ext.create('Ext.grid.Panel', {
+				    title: 'Simpsons',
+				    store: m_store,
+				    columns: [
+				        { header: 'code', dataIndex: 'code', flex: 1 },
+				        { header: 'partName',  dataIndex: 'name', flex: 1 },
+				        { header: 'partNum', dataIndex: 'partNum', flex: 1 },
+				        { header: 'footprint', dataIndex: 'footprint', flex: 1 },
+				        { header: 'manufacturer',  dataIndex: 'manufacturer', flex: 1 },
+				        { header: 'describe', dataIndex: 'describe', flex: 1 }     
+				    ],
+				    width: 400,
+				    height: 125,
+				    multiSelect : true,
+				    selType: 'rowmodel',
+				    dockedItems: [{
+				        xtype: 'pagingtoolbar',
+				        store: m_store,   // same store GridPanel is using
+				        dock: 'bottom',
+				        displayInfo: true,   
+				        items:[
+				                '-',
+				                { text: 'add', iconCls:"silk-user_add", handler: function() {
+				                    code_action_handler("add")
+				                }},
+				                { text: 'edit', iconCls:"silk-user_edit", handler: function() {
+				                   code_action_handler("edit")
+				                }},
+				                { text: 'delete', iconCls:"silk-user_delete", handler: function() {
+				                   code_action_handler("delete")
+				                }},
+				                {
+										    	xtype: 'textfield',
+										    	hideLabel: true,
+										    	width: 150,
+										    	id: "search_code1",
+										 //   	allowBlank:false,
+										    },
+				                {
+				                  id:"search_code",
+													xtype : 'combo',
+													listConfig : {
+														emptyText : 'no match data', 
+														maxHeight : 60 
+													},
+				  								name:'post',
+													autoSelect : true,
+													triggerAction: 'all', 
+													store : postStore, 
+													displayField:'key', 
+													valueField:'value', 
+													queryMode: 'local', 
+													forceSelection : true, 
+													typeAhead : true, 
+													value:'101100'
+												},
+												{
+										    	xtype: 'textfield',
+										    	hideLabel: true,
+										    	width: 150,
+										    	id: "search_code2",
+										    	allowBlank:true,
+										    },
+												{ text: 'search',id:"search_code_button", iconCls:"silk-zoom", handler:function(){code_search("search")} },
+				                { text: 'clear', id:"clear_code_button", disabled:true, handler: function(){code_search("clear")} }
+				                ]       
+				    }],
+				});
+
+				var m_work_space = Ext.getCmp('work-space');
+
+				m_work_space.removeAll();
+				
+				m_work_space.add(m_codegrid);
+				
+				m_work_space.doLayout();
+			
